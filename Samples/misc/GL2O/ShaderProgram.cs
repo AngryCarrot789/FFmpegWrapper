@@ -4,11 +4,11 @@ namespace GL2O;
 public class ShaderProgram : GLObject
 {
     public int Id { get; private set; }
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     Dictionary<string, int> _uniformLocs = new();
 
-    public ShaderProgram(string? name = null)
+    public ShaderProgram(string name = null)
     {
         Id = GL.CreateProgram();
         Name = name;

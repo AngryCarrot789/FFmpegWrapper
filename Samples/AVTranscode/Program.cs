@@ -85,7 +85,7 @@ abstract class MediaTranscoder : IDisposable
 
     protected abstract void TranscodeFrame(MediaFrame inputFrame);
 
-    protected void EncodeOutputFrame(MediaFrame? frame)
+    protected void EncodeOutputFrame(MediaFrame frame)
     {
         _muxer.EncodeAndWrite(_outStream, _encoder, frame);
     }
@@ -106,7 +106,7 @@ abstract class MediaTranscoder : IDisposable
 class AudioTranscoder : MediaTranscoder
 {
     private SwResampler _resampler = null!;
-    private AudioFrame? _outFrame;
+    private AudioFrame _outFrame;
 
     public AudioTranscoder(MediaMuxer muxer, MediaDemuxer demuxer, MediaStream inputStream)
         : base(muxer, demuxer, inputStream) { }
@@ -121,7 +121,7 @@ class AudioTranscoder : MediaTranscoder
         return new AudioEncoder(CodecIds.Opus, format, bitrate: 128_000);
     }
 
-    protected override void TranscodeFrame(MediaFrame? frame)
+    protected override void TranscodeFrame(MediaFrame frame)
     {
         //Create frame lazily (after the encoder is open) so that we can use the proper frame size.
         _outFrame ??= new AudioFrame(_resampler.OutputFormat, ((AudioEncoder)_encoder).FrameSize ?? 4096) {
@@ -129,7 +129,7 @@ class AudioTranscoder : MediaTranscoder
             PresentationTimestamp = 0
         };
 
-        _resampler.BeginConvert((AudioFrame?)frame, _outFrame);
+        _resampler.BeginConvert((AudioFrame)frame, _outFrame);
 
         while (_resampler.Drain()) {
             EncodeOutputFrame(_outFrame);

@@ -2,9 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>10</LangVersion>
     <InvariantGlobalization>true</InvariantGlobalization>
 
     <PackageId>FFmpeg.ApiWrapper</PackageId>
@@ -31,6 +28,6 @@
   <ItemGroup>
     <PackageReference Include="FFmpeg.AutoGen" Version="6.0.0" />
     <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 </Project>

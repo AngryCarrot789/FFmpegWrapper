@@ -1,60 +1,61 @@
-﻿namespace FFmpeg.Wrapper;
+﻿using System;
+using System.IO;
+using FFmpeg.AutoGen;
 
-/// <summary> Wraps a <see cref="Stream"/> into a <see cref="AVIOContext"/>. </summary>
-public class StreamIOContext : IOContext
-{
-    public Stream BaseStream { get; }
+namespace FFmpeg.Wrapper {
 
-    private bool _leaveOpen;
+    /// <summary> Wraps a <see cref="Stream"/> into a <see cref="AVIOContext"/>. </summary>
+    public class StreamIOContext : IOContext {
+        public Stream BaseStream { get; }
 
-    public StreamIOContext(Stream stream, bool leaveOpen = false, int bufferSize = 4096)
-        : base(bufferSize, stream.CanRead, stream.CanWrite, stream.CanSeek)
-    {
-        BaseStream = stream;
-        _leaveOpen = leaveOpen;
-    }
+        private bool _leaveOpen;
 
-#if NETSTANDARD2_1_OR_GREATER
+        public StreamIOContext(Stream stream, bool leaveOpen = false, int bufferSize = 4096)
+            : base(bufferSize, stream.CanRead, stream.CanWrite, stream.CanSeek) {
+            BaseStream = stream;
+            _leaveOpen = leaveOpen;
+        }
+
+        #if NETSTANDARD2_1_OR_GREATER
     protected override int Read(Span<byte> buffer) => BaseStream.Read(buffer);
     protected override void Write(ReadOnlySpan<byte> buffer) => BaseStream.Write(buffer);
-#else
-    private readonly byte[] _scratchBuffer = new byte[4096 * 4];
+        #else
+        private readonly byte[] _scratchBuffer = new byte[4096 * 4];
 
-    protected override int Read(Span<byte> buffer)
-    {
-        int bytesRead = BaseStream.Read(_scratchBuffer, 0, Math.Min(buffer.Length, _scratchBuffer.Length));
-        _scratchBuffer.AsSpan(0, bytesRead).CopyTo(buffer);
-        return bytesRead;
-    }
-    protected override void Write(ReadOnlySpan<byte> buffer)
-    {
-        int pos = 0;
-        while (pos < buffer.Length) {
-            int count = Math.Min(_scratchBuffer.Length, buffer.Length - pos);
-            buffer.Slice(pos, count).CopyTo(_scratchBuffer);
-            BaseStream.Write(_scratchBuffer, 0, count);
-            pos += count;
+        protected override int Read(Span<byte> buffer) {
+            int bytesRead = BaseStream.Read(_scratchBuffer, 0, Math.Min(buffer.Length, _scratchBuffer.Length));
+            _scratchBuffer.AsSpan(0, bytesRead).CopyTo(buffer);
+            return bytesRead;
         }
-    }
-#endif
 
-    protected override long Seek(long offset, SeekOrigin origin) => BaseStream.Seek(offset, origin);
-
-    protected override long? GetLength()
-    {
-        try {
-            return BaseStream.Length;
-        } catch (NotSupportedException) {
-            return null;
+        protected override void Write(ReadOnlySpan<byte> buffer) {
+            int pos = 0;
+            while (pos < buffer.Length) {
+                int count = Math.Min(_scratchBuffer.Length, buffer.Length - pos);
+                buffer.Slice(pos, count).CopyTo(_scratchBuffer);
+                BaseStream.Write(_scratchBuffer, 0, count);
+                pos += count;
+            }
         }
-    }
+        #endif
 
-    protected override void Free()
-    {
-        base.Free();
+        protected override long Seek(long offset, SeekOrigin origin) => BaseStream.Seek(offset, origin);
 
-        if (!_leaveOpen) {
-            BaseStream.Dispose();
+        protected override long? GetLength() {
+            try {
+                return BaseStream.Length;
+            }
+            catch (NotSupportedException) {
+                return null;
+            }
+        }
+
+        protected override void Free() {
+            base.Free();
+
+            if (!_leaveOpen) {
+                BaseStream.Dispose();
+            }
         }
     }
 }
